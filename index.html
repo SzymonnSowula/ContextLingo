@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikacja do nauki języka</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f9f9f9;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        textarea {
+            height: 120px;
+            resize: vertical;
+        }
+        .language-selectors {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        button {
+            background-color: #ff6b4a;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #e55a3c;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .loading {
+            color: #666;
+            font-style: italic;
+        }
+        .error {
+            color: #d32f2f;
+            background-color: #ffebee;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #d32f2f;
+        }
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            border-left: 4px solid #ffc107;
+        }
+        .language-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        .context-examples {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            border-left: 4px solid #17a2b8;
+        }
+        .context-examples h4 {
+            margin-top: 0;
+            color: #17a2b8;
+        }
+        .context-examples ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .context-examples li {
+            margin-bottom: 5px;
+            color: #666;
+        }
+        .stats-info {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            border-left: 4px solid #28a745;
+        }
+        .model-info {
+            background-color: #fff3e0;
+            color: #e65100;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            border-left: 4px solid #ff6b4a;
+        }
+
+        /* STYLE FISZEK */
+        .flashcard-section {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            display: none;
+        }
+        .flashcard-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .flashcard-progress {
+            background-color: #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .flashcard-mode {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .flashcard-card {
+            background-color: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin: 20px 0;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .flashcard-card:hover {
+            transform: translateY(-5px);
+        }
+        .flashcard-category {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            background-color: #007bff;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .flashcard-phrase {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+        .flashcard-translation {
+            font-size: 20px;
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+        .flashcard-pronunciation {
+            font-size: 16px;
+            color: #28a745;
+            font-style: italic;
+            margin-top: 10px;
+        }
+        .flashcard-navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .flashcard-nav-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        .flashcard-nav-button:hover {
+            background-color: #0056b3;
+        }
+        .flashcard-nav-button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .flashcard-reveal {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        .flashcard-reveal:hover {
+            background-color: #218838;
+        }
+        .flashcard-hidden {
+            opacity: 0;
+            transform: scale(0.95);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .flashcard-visible {
+            opacity: 1;
+            transform: scale(1);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .flashcard-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .flashcard-stat {
+            background-color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .flashcard-stat h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .flashcard-stat .number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        @media (max-width: 600px) {
+            .flashcard-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .flashcard-mode {
+                justify-content: center;
+            }
+            .flashcard-phrase {
+                font-size: 20px;
+            }
+            .flashcard-translation {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌍 Inteligentna Aplikacja do Nauki Języka</h1>
+        
+       <div class="model-info">
+    <strong>🚀 Napędzane przez:</strong> Mistral AI - Mistral Small Latest - Zaawansowany model językowy z Francji
+</div>
+
+<div class="warning" style="background-color: #fff3cd; border-left: 4px solid #ff6b4a; color: #856404;">
+    <strong>⚠️ WAŻNE OSTRZEŻENIE:</strong> Ta aplikacja używa mojego osobistego klucza API Mistral AI. 
+    <strong>Proszę o oszczędne korzystanie</strong> - każde wywołanie kosztuje pieniądze! 
+    Nadmierne używanie może doprowadzić do bankructwa 💸. 
+    Używaj tylko do testów i nauki. Dziękuję za zrozumienie! 🙏
+</div>
+        
+        <div class="language-selectors">
+            <div class="form-group">
+                <label for="sourceLanguage">Język źródłowy:</label>
+                <select id="sourceLanguage">
+                    <option value="polski">🇵🇱 Polski</option>
+    <option value="angielski">🇬🇧 Angielski</option>
+    <option value="niemiecki">🇩🇪 Niemiecki</option>
+    <option value="francuski">🇫🇷 Francuski</option>
+    <option value="wloski">🇮🇹 Włoski</option>
+    <option value="hiszpanski">🇪🇸 Hiszpański</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="targetLanguage">Język docelowy:</label>
+                <select id="targetLanguage">
+                    <option value="angielski">🇬🇧 Angielski</option>
+    <option value="polski">🇵🇱 Polski</option>
+    <option value="niemiecki">🇩🇪 Niemiecki</option>
+    <option value="francuski">🇫🇷 Francuski</option>
+    <option value="wloski">🇮🇹 Włoski</option>
+    <option value="hiszpanski">🇪🇸 Hiszpański</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="language-info">
+            <span>Kierunek tłumaczenia:</span>
+            <span id="translationDirection"><strong>Polski → Angielski</strong></span>
+        </div>
+
+        <div class="stats-info">
+            <strong>📊 Otrzymasz:</strong> 4-6 kategorii z minimum 10 zwrotów każda = 40-60+ przydatnych fraz!
+        </div>
+        
+        <div class="context-examples">
+            <h4>💡 Przykłady kontekstów:</h4>
+            <ul>
+                <li><strong>Podróż biznesowa:</strong> "Lecę do Berlina na konferencję IT"</li>
+                <li><strong>Turystyka:</strong> "Zwiedzam Paryż z rodziną, chcę zobaczyć Luwr"</li>
+                <li><strong>Studia:</strong> "Studiuję w Rzymie, potrzebuję pomocy z codziennymi sprawami"</li>
+                <li><strong>Przeprowadzka:</strong> "Przeprowadzam się do Amsterdamu, szukam mieszkania"</li>
+                <li><strong>Wakacje:</strong> "Spędzam wakacje w Barcelonie, chcę poznać lokalną kuchnię"</li>
+            </ul>
+        </div>
+        
+        <div class="form-group">
+            <label for="context">Opisz swoją sytuację/podróż:</label>
+            <textarea id="context" placeholder="Np. Lecę do Tokio na konferencję IT i chcę zwiedzić tradycyjne świątynie. Potrzebuję również pomocy z transportem publicznym i znalezieniem dobrej restauracji."></textarea>
+        </div>
+        
+        <div id="warningMessage" class="warning" style="display: none;"></div>
+        
+        <button id="generate">🚀 Generuj z Mistral AI</button>
+        
+        <h2>📚 Twoje Spersonalizowane Frazy:</h2>
+        <pre id="result">Opisz swoją sytuację powyżej i kliknij przycisk aby otrzymać bogate zbiory spersonalizowanych fraz...</pre>
+        
+        <div id="startLearningContainer" style="display: block; margin-top: 20px; text-align: center;">
+            <button id="startLearning">🎓 Rozpocznij Naukę Fiszkami</button>
+        </div>
+
+        <!-- SEKCJA FISZEK -->
+        <div id="flashcardSection" class="flashcard-section">
+            <h2>🎯 Nauka Fiszkami</h2>
+            
+            <div class="flashcard-controls">
+                <div class="flashcard-progress">
+                    <span id="currentCard">0</span> / <span id="totalCards">0</span>
+                    <span id="currentCategory"></span>
+                </div>
+                
+                <div class="flashcard-mode">
+                    <label>
+                        <input type="radio" name="learningMode" value="sourceToTarget" checked>
+                        <span id="modeLabel1">Polski → Angielski</span>
+                    </label>
+                    <label>
+                        <input type="radio" name="learningMode" value="targetToSource">
+                        <span id="modeLabel2">Angielski → Polski</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="flashcard-card" id="flashcard" onclick="revealAnswer()">
+                <div class="flashcard-category" id="cardCategory"></div>
+                <div class="flashcard-phrase" id="cardPhrase">Kliknij "Rozpocznij Naukę" aby zacząć!</div>
+                <div class="flashcard-translation flashcard-hidden" id="cardTranslation"></div>
+                <div class="flashcard-pronunciation flashcard-hidden" id="cardPronunciation"></div>
+                <button class="flashcard-reveal" id="revealButton" onclick="revealAnswer()" style="display: none;">
+                    👁️ Pokaż Odpowiedź
+                </button>
+            </div>
+
+            <div class="flashcard-navigation">
+                <button class="flashcard-nav-button" id="prevCard" onclick="previousCard()">
+                    ← Poprzednia
+                </button>
+                <button class="flashcard-nav-button" id="shuffleCards" onclick="shuffleCards()">
+                    🔀 Wymieszaj
+                </button>
+                <button class="flashcard-nav-button" id="nextCard" onclick="nextCard()">
+                    Następna →
+                </button>
+            </div>
+
+            <div class="flashcard-stats">
+                <div class="flashcard-stat">
+                    <h4>📊 Łączne Frazy</h4>
+                    <div class="number" id="totalPhrasesCount">0</div>
+                </div>
+                <div class="flashcard-stat">
+                    <h4>📚 Kategorie</h4>
+                    <div class="number" id="categoriesCount">0</div>
+                </div>
+                <div class="flashcard-stat">
+                    <h4>🎯 Postęp</h4>
+                    <div class="number" id="progressPercent">0%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Twój klucz API Mistral AI
+        const MISTRAL_API_KEY = prompt('Podaj swój klucz API Mistral:');
+        // Zmienne globalne dla fiszek
+        let flashcardData = [];
+        let allPhrases = [];
+        let currentIndex = 0;
+        let isAnswerRevealed = false;
+        
+        // Mapowanie nazw języków
+        const languageNames = {
+         'polski': { name: 'Polski', englishName: 'Polish', flag: '🇵🇱' },
+    'angielski': { name: 'Angielski', englishName: 'English', flag: '🇬🇧' },
+    'niemiecki': { name: 'Niemiecki', englishName: 'German', flag: '🇩🇪' },
+    'francuski': { name: 'Francuski', englishName: 'French', flag: '🇫🇷' },
+    'wloski': { name: 'Włoski', englishName: 'Italian', flag: '🇮🇹' },
+    'hiszpanski': { name: 'Hiszpański', englishName: 'Spanish', flag: '🇪🇸' }
+        };
+
+        // Podstawowe funkcje aplikacji
+        function updateTranslationDirection() {
+            const sourceLanguage = document.getElementById('sourceLanguage').value;
+            const targetLanguage = document.getElementById('targetLanguage').value;
+            const directionElement = document.getElementById('translationDirection');
+            
+            directionElement.innerHTML = `<strong>${languageNames[sourceLanguage].flag} ${languageNames[sourceLanguage].name} → ${languageNames[targetLanguage].flag} ${languageNames[targetLanguage].name}</strong>`;
+            
+            // Aktualizuj etykiety trybów nauki
+            document.getElementById('modeLabel1').textContent = `${languageNames[sourceLanguage].name} → ${languageNames[targetLanguage].name}`;
+            document.getElementById('modeLabel2').textContent = `${languageNames[targetLanguage].name} → ${languageNames[sourceLanguage].name}`;
+        }
+
+        function validateLanguages() {
+            const sourceLanguage = document.getElementById('sourceLanguage').value;
+            const targetLanguage = document.getElementById('targetLanguage').value;
+            const warningElement = document.getElementById('warningMessage');
+            const generateButton = document.getElementById('generate');
+            
+            if (sourceLanguage === targetLanguage) {
+                warningElement.textContent = '⚠️ Język źródłowy i docelowy muszą być różne!';
+                warningElement.style.display = 'block';
+                generateButton.disabled = true;
+                return false;
+            } else {
+                warningElement.style.display = 'none';
+                generateButton.disabled = false;
+                return true;
+            }
+        }
+
+        // Event listenery
+        document.getElementById('sourceLanguage').addEventListener('change', () => {
+            updateTranslationDirection();
+            validateLanguages();
+        });
+
+        document.getElementById('targetLanguage').addEventListener('change', () => {
+            updateTranslationDirection();
+            validateLanguages();
+        });
+
+        // Inicjalizacja
+        updateTranslationDirection();
+        validateLanguages();
+
+        // Główna funkcja generowania
+        document.getElementById('generate').addEventListener('click', async () => {
+            if (!validateLanguages()) return;
+            
+            const context = document.getElementById('context').value;
+            const sourceLanguage = document.getElementById('sourceLanguage').value;
+            const targetLanguage = document.getElementById('targetLanguage').value;
+            const resultElement = document.getElementById('result');
+            
+            if (!context.trim()) {
+                resultElement.textContent = '⚠️ Proszę opisać swoją sytuację lub podróż powyżej.';
+                resultElement.className = 'error';
+                return;
+            }
+            
+            resultElement.textContent = '🧠 Mistral AI analizuje Twój kontekst i generuje premium frazy...';
+            resultElement.className = 'loading';
+            
+            // Ukryj przycisk nauki i sekcję fiszek
+            document.getElementById('startLearningContainer').style.display = 'none';
+            document.getElementById('flashcardSection').style.display = 'none';
+
+            const prompt = `Przeanalizuj podany kontekst i wygeneruj spersonalizowaną listę JSON z bogatymi zbiorami fraz do nauki języka.
+
+KONTEKST UŻYTKOWNIKA: "${context}"
+
+INSTRUKCJE SZCZEGÓŁOWEJ ANALIZY:
+1. Zidentyfikuj dokładne MIEJSCE DOCELOWE (miasto, kraj, region, dzielnica)
+2. Rozpoznaj TYP PODRÓŻY/SYTUACJI (turystyka, biznes, studia, rodzina, przeprowadzka, praca, itp.)
+3. Określ WSZYSTKIE PLANOWANE AKTYWNOŚCI (zwiedzanie, spotkania, zakupy, nauka, praca, rozrywka)
+4. Wykryj SPECJALNE POTRZEBY (transport, nocleg, jedzenie, technologia, medycyna, komunikacja)
+5. Uwzględnij LOKALNE SPECYFIKI (kultura, zwyczaje, etykieta, waluta, święta)
+
+FORMAT JSON:
+Wygeneruj tablicę obiektów kategorii, gdzie każdy zawiera:
+- "category": Nazwa kategorii w języku ${languageNames[sourceLanguage].englishName} (precyzyjnie dostosowana do kontekstu)
+- "phrases": Tablica MINIMUM 10 najważniejszych fraz z polami:
+  - "original": Fraza w języku ${languageNames[sourceLanguage].englishName}
+  - "translation": Dokładne tłumaczenie na język ${languageNames[targetLanguage].englishName}
+  - "pronounce": Przejrzysta transkrypcja fonetyczna dla ${languageNames[sourceLanguage].englishName}
+
+WYMAGANIA SZCZEGÓŁOWEGO GENEROWANIA:
+- Stwórz 4-6 najważniejszych kategorii dla danego kontekstu
+- W każdej kategorii umieść MINIMUM 10 praktycznych fraz (preferowane 10-15)
+- Uwzględnij specyfikę miejsca docelowego (np. lokalne słownictwo, kulturę, zwyczaje)
+- Generuj frazy poziom A1-A2 (podstawowe, ale wszechstronne)
+- Priorytetyzuj frazy które NAPRAWDĘ się przydadzą w danej sytuacji
+- Dodaj różnorodność: pytania, stwierdzenia, prośby, podziękowania
+- Uwzględnij formalne i nieformalne warianty gdzie to stosowne
+
+Wygeneruj wyłącznie wynik w formacie JSON, bez dodatkowych wyjaśnień, komentarzy lub tekstu wprowadzającego.`;
+
+            try {
+                const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${MISTRAL_API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: 'mistral-small-latest',
+                        messages: [
+                            {
+                                role: 'system',
+                                content: 'Jesteś ekspertem w nauce języków i tworzysz spersonalizowane zestawy fraz dla podróżujących. Generujesz tylko poprawny JSON bez dodatkowych komentarzy.'
+                            },
+                            {
+                                role: 'user',
+                                content: prompt
+                            }
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 4000
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP error! status: ${response.status}\nDetails: ${errorText}`);
+                }
+
+                const data = await response.json();
+                const content = data.choices[0]?.message?.content || 'Brak wyników.';
+                
+                resultElement.textContent = content;
+                resultElement.className = '';
+                
+                // Próba sparsowania i sformatowania JSON
+                try {
+    // Oczyść markdown formatting z JSON
+    let cleanedContent = content.trim();
+    if (cleanedContent.startsWith('```json')) {
+        cleanedContent = cleanedContent.substring(7);
+    }
+    if (cleanedContent.endsWith('```')) {
+        cleanedContent = cleanedContent.slice(0, -3);
+    }
+    cleanedContent = cleanedContent.trim();
+    
+    const jsonContent = JSON.parse(cleanedContent);
+    resultElement.textContent = JSON.stringify(jsonContent, null, 2);
+    
+    // Sprawdź czy JSON ma prawidłową strukturę
+    if (Array.isArray(jsonContent) && jsonContent.length > 0) {
+        // Zapisz dane do fiszek
+        flashcardData = jsonContent;
+        prepareFlashcards();
+        
+        // Pokaż przycisk nauki
+        document.getElementById('startLearningContainer').style.display = 'block';
+    } else {
+        console.log('JSON nie ma prawidłowej struktury tablicy');
+    }
+    
+} catch (e) {
+    console.log('Nie udało się sparsować JSON:', e);
+}
+                
+            } catch (error) {
+                console.error('Pełny błąd:', error);
+                resultElement.textContent = `❌ Wystąpił błąd: ${error.message}`;
+                resultElement.className = 'error';
+            }
+        });
+
+        // FUNKCJE FISZEK
+        function prepareFlashcards() {
+    allPhrases = [];
+    
+    // Sprawdź czy flashcardData jest tablicą i ma dane
+    if (!Array.isArray(flashcardData) || flashcardData.length === 0) {
+        console.log('Brak danych flashcardData');
+        return;
+    }
+    
+    // Przygotuj wszystkie frazy z kategorii
+    flashcardData.forEach(category => {
+        if (category.phrases && Array.isArray(category.phrases)) {
+            category.phrases.forEach(phrase => {
+                allPhrases.push({
+                    category: category.category,
+                    original: phrase.original,
+                    translation: phrase.translation,
+                    pronounce: phrase.pronounce || phrase.pronunciation || 'Brak transkrypcji'
+                });
+            });
+        }
+    });
+    
+    console.log('Przygotowano fiszki:', allPhrases.length);
+    
+    // Aktualizuj statystyki
+    document.getElementById('totalPhrasesCount').textContent = allPhrases.length;
+    document.getElementById('categoriesCount').textContent = flashcardData.length;
+    document.getElementById('totalCards').textContent = allPhrases.length;
+}
+
+        function startLearning() {
+            if (allPhrases.length === 0) {
+                alert('Brak fraz do nauki. Najpierw wygeneruj frazy!');
+                return;
+            }
+            
+            currentIndex = 0;
+            document.getElementById('flashcardSection').style.display = 'block';
+            document.getElementById('flashcardSection').scrollIntoView({ behavior: 'smooth' });
+            showCurrentCard();
+        }
+
+        function showCurrentCard() {
+            if (allPhrases.length === 0) return;
+            
+            const currentPhrase = allPhrases[currentIndex];
+            const learningMode = document.querySelector('input[name="learningMode"]:checked').value;
+            
+            // Aktualizuj informacje o karcie
+            document.getElementById('currentCard').textContent = currentIndex + 1;
+            document.getElementById('currentCategory').textContent = `(${currentPhrase.category})`;
+            document.getElementById('cardCategory').textContent = currentPhrase.category;
+            
+            // Ustaw treść karty na podstawie trybu nauki
+            if (learningMode === 'sourceToTarget') {
+                document.getElementById('cardPhrase').textContent = currentPhrase.original;
+                document.getElementById('cardTranslation').textContent = currentPhrase.translation;
+            } else {
+                document.getElementById('cardPhrase').textContent = currentPhrase.translation;
+                document.getElementById('cardTranslation').textContent = currentPhrase.original;
+            }
+            
+            document.getElementById('cardPronunciation').textContent = `🔊 ${currentPhrase.pronounce}`;
+            
+            // Ukryj odpowiedź
+            hideAnswer();
+            
+            // Aktualizuj przyciski nawigacji
+            document.getElementById('prevCard').disabled = currentIndex === 0;
+            document.getElementById('nextCard').disabled = currentIndex === allPhrases.length - 1;
+            
+            // Aktualizuj postęp
+            const progress = Math.round(((currentIndex + 1) / allPhrases.length) * 100);
+            document.getElementById('progressPercent').textContent = `${progress}%`;
+        }
+
+        function revealAnswer() {
+            if (isAnswerRevealed) return;
+            
+            document.getElementById('cardTranslation').classList.remove('flashcard-hidden');
+            document.getElementById('cardTranslation').classList.add('flashcard-visible');
+            document.getElementById('cardPronunciation').classList.remove('flashcard-hidden');
+            document.getElementById('cardPronunciation').classList.add('flashcard-visible');
+            document.getElementById('revealButton').style.display = 'none';
+            
+            isAnswerRevealed = true;
+        }
+
+        function hideAnswer() {
+            document.getElementById('cardTranslation').classList.remove('flashcard-visible');
+            document.getElementById('cardTranslation').classList.add('flashcard-hidden');
+            document.getElementById('cardPronunciation').classList.remove('flashcard-visible');
+            document.getElementById('cardPronunciation').classList.add('flashcard-hidden');
+            document.getElementById('revealButton').style.display = 'block';
+            
+            isAnswerRevealed = false;
+        }
+
+        function nextCard() {
+            if (currentIndex < allPhrases.length - 1) {
+                currentIndex++;
+                showCurrentCard();
+            }
+        }
+
+        function previousCard() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                showCurrentCard();
+            }
+        }
+
+        function shuffleCards() {
+            // Algorytm Fisher-Yates shuffle
+            for (let i = allPhrases.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [allPhrases[i], allPhrases[j]] = [allPhrases[j], allPhrases[i]];
+            }
+            currentIndex = 0;
+            showCurrentCard();
+        }
+
+        // Event listenery dla trybów nauki
+        document.querySelectorAll('input[name="learningMode"]').forEach(radio => {
+            radio.addEventListener('change', showCurrentCard);
+        });
+
+        // Event listener dla przycisku rozpoczęcia nauki
+        document.getElementById('startLearning').addEventListener('click', startLearning);
+
+        // Obsługa klawiatury
+        document.addEventListener('keydown', (e) => {
+            if (document.getElementById('flashcardSection').style.display === 'block') {
+                switch(e.key) {
+                    case 'ArrowLeft':
+                        previousCard();
+                        break;
+                    case 'ArrowRight':
+                        nextCard();
+                        break;
+                    case ' ':
+                        e.preventDefault();
+                        revealAnswer();
+                        break;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
