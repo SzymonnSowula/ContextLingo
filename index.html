@@ -301,7 +301,7 @@
         <h1>🌍 Inteligentna Aplikacja do Nauki Języka</h1>
         
        <div class="model-info">
-    <strong>🚀 Napędzane przez:</strong> Mistral AI - Mistral Small Latest - Zaawansowany model językowy z Francji
+    <strong>🚀 Napędzane przez:</strong> Mistral AI - Mistral Medium Latest - Zaawansowany model językowy z Francji
 </div>
 
 <div class="warning" style="background-color: #fff3cd; border-left: 4px solid #ff6b4a; color: #856404;">
@@ -538,7 +538,7 @@ Wygeneruj tablicę obiektów kategorii, gdzie każdy zawiera:
 - "phrases": Tablica MINIMUM 10 najważniejszych fraz z polami:
   - "original": Fraza w języku ${languageNames[sourceLanguage].englishName}
   - "translation": Dokładne tłumaczenie na język ${languageNames[targetLanguage].englishName}
-  - "pronounce": Przejrzysta transkrypcja fonetyczna dla ${languageNames[sourceLanguage].englishName}, Remember it should be easy to pronounce in ${languageNames[sourceLanguage].englishName},
+  - "pronounce": Przejrzysta transkrypcja fonetyczna dla ${languageNames[targetLanguage].englishName},
 
 WYMAGANIA SZCZEGÓŁOWEGO GENEROWANIA:
 - Stwórz 4-6 najważniejszych kategorii dla danego kontekstu
@@ -548,6 +548,7 @@ WYMAGANIA SZCZEGÓŁOWEGO GENEROWANIA:
 - Priorytetyzuj frazy które NAPRAWDĘ się przydadzą w danej sytuacji
 - Dodaj różnorodność: pytania, stwierdzenia, prośby, podziękowania
 - Uwzględnij formalne i nieformalne warianty gdzie to stosowne
+-Pamiętaj, że wymowa ma być łatwa i przystępna dla języka docelowego
 
 Wygeneruj wyłącznie wynik w formacie JSON, bez dodatkowych wyjaśnień, komentarzy lub tekstu wprowadzającego.`;
 
@@ -559,7 +560,7 @@ Wygeneruj wyłącznie wynik w formacie JSON, bez dodatkowych wyjaśnień, koment
                         'Authorization': `Bearer ${MISTRAL_API_KEY}`
                     },
                     body: JSON.stringify({
-                        model: 'mistral-small-latest',
+                        model: 'mistral-medium-latest',
                         messages: [
                             {
                                 role: 'system',
